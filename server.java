@@ -22,12 +22,20 @@ public class server{
 				String msg = input.nextLine();
 				if(msg.isEmpty()){
 					//ok, how to quit?
-					ss.close();
+					ShutdownServer();
 					break;
 				}
+				if(msg.charAt(0) == '/') //Handle comment
+				{	
+					if(msg.equals("/status"))
+					{
+						PrintStatus();
+					}
+				}
+				else
 				for(Socket s : sockets){
 					try{
-						DataOutputStream dout = new DataOutputStream(s.getOutputStream());
+						DataOutputStream dout = new DataOutputStream(s.getOutputStream());						
 						dout.writeUTF(msg);
 					}
 					catch(Exception e)
@@ -59,10 +67,13 @@ public class server{
 			{
 				try{
 					data = (String)din.readUTF();
-					out.println("Client " + ip + " message: " + data);
+					if(!data.isEmpty())
+						out.println("Client " + ip + " message: " + data);
 				}
 				catch(Exception e)
 				{
+					out.println("Connection to client lost");
+					sockets.remove(s);
 					return "Connection lost: " + e;
 				}
 			}
@@ -75,6 +86,14 @@ public class server{
 	private static List<Future<String>> listeners;
 	private static List<Socket> sockets = new ArrayList<Socket>();
 	
+	private static void PrintStatus()
+	{
+		out.println("\n=============STATUS===============\n");
+		out.println(sockets.size() + " sockets");
+		out.println(listeners.size() + " listeners");
+		out.println("\n=============------===============\n");
+	}
+	
 	private static void StartMasterListener()//Handles input listener and closing server upon command
 	{
 		ExecutorService inputExecutor = Executors.newSingleThreadExecutor();
@@ -86,6 +105,27 @@ public class server{
 	{
 		sockets.add(soc);
 		listeners.add(executor.submit(new SocketListener(soc)));
+	}
+	
+	private static void ShutdownServer()
+	{
+		for(Socket s : sockets)
+		{
+			try{
+				s.close();
+			}
+			catch(Exception e)
+			{
+				out.println("Failed shutting down socket of client ");
+			}
+		}
+		try{
+			ss.close();
+		}
+		catch(Exception e)
+		{
+			out.println("Failed shutting down server socket");
+		}
 	}
 	
 	public static void main(String[] args) throws IOException
