@@ -62,18 +62,18 @@ public class client{
 	{
 		//Declarations
 		InetAddress host = InetAddress.getLocalHost();
-		
+
 		ExecutorService inputExecutor = Executors.newSingleThreadExecutor(); //Dedicate a single thread for input listening
-		
+
 		//Start connection to server
 		s = new Socket(host.getHostName(), port);
-		
+
 		//Start background input thread
 		inputExecutor.submit(new InputListener());
-		
+
 		//Start listening to server for messages
 		ExecutorService serverListener = Executors.newSingleThreadExecutor();
 		serverListener.submit(new SocketListener());
-		
+
 	}
 }
